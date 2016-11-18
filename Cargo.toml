@@ -1,0 +1,7 @@
+[package]
+authors = ["Marc Brinkmann <git@marcbrinkmann.de>"]
+name = "ulog"
+version = "0.1.0"
+
+[dependencies]
+log = "0.3"
