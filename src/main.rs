@@ -1,8 +1,10 @@
+#[macro_use]
 extern crate log;
 extern crate thread_local;
 
-use log::{LogRecord, LogLevel, LogMetadata};
+use log::{LogRecord, LogLevel, LogLevelFilter, LogMetadata};
 
+use std::thread;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -10,8 +12,7 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 
 use thread_local::ThreadLocal;
 
-// thread_local!(static FOO: usize = 123);
-
+#[derive(Debug)]
 pub struct LogMessage {
 
 }
@@ -60,7 +61,8 @@ impl AsyncLogger {
         // it
 
         self.local_sender.get_or(|| {
-            let guard = self.sender.lock().unwrap();
+            let guard = self.sender.lock().expect("lock poisoned while
+                trying to clone new receiver for thread");
             let local_tx = guard.clone();
             Box::new(local_tx)
         })
@@ -82,12 +84,30 @@ impl log::Log for AsyncLogger {
     }
 }
 
-fn init() {
-    println!("INIT LOGGING");
+fn init<F>(bufsize: usize, handle: F)
+    where F: Fn(LogMessage) -> (),
+          F: Send + 'static
+{
+    let (logger, rx) = AsyncLogger::new(bufsize);
+
+    thread::spawn(move || {
+        loop {
+            // FIXME: maybe just exit successfully?
+            let msg = rx.recv().expect("closed logging channel");
+            handle(msg);
+        }
+    });
+
+    log::set_logger(move |max_log_level| {
+        // FIXME: max_log_level ignored?
+        max_log_level.set(LogLevelFilter::Debug);
+        Box::new(logger)
+    });
 }
 
 fn main() {
-    init();
+    init(128, move |msg| println!("Handling your logs: {:?}", msg));
+    debug!("Log test");
 
-    println!("Hello, world!");
+    loop {}
 }
