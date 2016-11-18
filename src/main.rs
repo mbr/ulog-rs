@@ -5,6 +5,7 @@ extern crate thread_local;
 use log::{LogRecord, LogLocation, LogLevel, LogLevelFilter, LogMetadata};
 
 use std::{fmt, thread};
+use std::io::Write;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -93,7 +94,7 @@ impl log::Log for AsyncLogger {
     }
 }
 
-fn init<F>(bufsize: usize, handle: F)
+fn init<F>(bufsize: usize, handle: F) -> Result<(), log::SetLoggerError>
     where F: Fn(LogMessage) -> (),
           F: Send + 'static
 {
@@ -111,12 +112,21 @@ fn init<F>(bufsize: usize, handle: F)
         // FIXME: max_log_level ignored?
         max_log_level.set(LogLevelFilter::Debug);
         Box::new(logger)
-    });
+    })
+}
+
+fn init_stderr() -> Result<(), log::SetLoggerError> {
+    init(128, move |msg| {
+        writeln!(&mut std::io::stderr(), "{}", msg).expect("Error writing
+            log to stderr");
+    })
 }
 
 fn main() {
-    init(128, move |msg| println!("{}", msg));
-    debug!("Log test");
+    init_stderr().unwrap();
 
-    loop {}
+
+    debug!("Log test");
+    loop {
+    }
 }
