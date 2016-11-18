@@ -2,9 +2,9 @@
 extern crate log;
 extern crate thread_local;
 
-use log::{LogRecord, LogLevel, LogLevelFilter, LogMetadata};
+use log::{LogRecord, LogLocation, LogLevel, LogLevelFilter, LogMetadata};
 
-use std::thread;
+use std::{fmt, thread};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -14,12 +14,15 @@ use thread_local::ThreadLocal;
 
 #[derive(Debug)]
 pub struct LogMessage {
-
+    pub level: LogLevel,
+    pub target: String,
+    pub msg: String,
+    pub location: LogLocation,
 }
 
-impl LogMessage {
-    fn new() -> LogMessage {
-        LogMessage {}
+impl fmt::Display for LogMessage {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}] {}: {}", self.level, self.target, self.msg)
     }
 }
 
@@ -76,7 +79,13 @@ impl log::Log for AsyncLogger {
     }
 
     fn log(&self, record: &LogRecord) {
-        let msg = LogMessage::new();
+        // NOTE: allocations happen here
+        let msg = LogMessage {
+            level: record.metadata().level(),
+            target: record.metadata().target().to_owned(),
+            msg: format!("{}", record.args()),
+            location: record.location().clone(),
+        };
         if let Err(_) = self.sender().try_send(msg) {
             // failed to send log message; increase failure count
             self.failures.fetch_add(1, Ordering::Relaxed);
@@ -106,7 +115,7 @@ fn init<F>(bufsize: usize, handle: F)
 }
 
 fn main() {
-    init(128, move |msg| println!("Handling your logs: {:?}", msg));
+    init(128, move |msg| println!("{}", msg));
     debug!("Log test");
 
     loop {}
