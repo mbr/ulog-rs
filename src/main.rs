@@ -103,7 +103,10 @@ fn init<F>(bufsize: usize, handle: F) -> Result<(), log::SetLoggerError>
     thread::spawn(move || {
         loop {
             // FIXME: maybe just exit successfully?
-            let msg = rx.recv().expect("closed logging channel");
+            let msg = match rx.recv() {
+                Ok(m) => m,
+                Err(_) => break,
+            };
             handle(msg);
         }
     });
