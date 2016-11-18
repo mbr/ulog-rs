@@ -185,18 +185,9 @@ pub fn init<F>(bufsize: usize, handle: F) -> Result<(), log::SetLoggerError>
 ///
 /// ## Panics
 /// Will panic if stderr is unavailable for writing.
-fn init_stderr() -> Result<(), log::SetLoggerError> {
+pub fn init_stderr() -> Result<(), log::SetLoggerError> {
     init(128, move |msg| {
         writeln!(&mut std::io::stderr(), "{}", msg).expect("Error writing
             log to stderr");
     })
-}
-
-fn main() {
-    init_stderr().unwrap();
-
-
-    debug!("Log test");
-    loop {
-    }
 }
