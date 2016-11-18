@@ -6,6 +6,7 @@ license = "MIT"
 repository = "https://github.com/mbr/ulog-rs"
 documentation = "https://docs.rs/ulog-rs"
 readme = "README.md"
+description = "A small logging library (not only) for hard real-time logging."
 
 [dependencies]
 log = "0.3"
