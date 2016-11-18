@@ -1,10 +1,10 @@
 [package]
 authors = ["Marc Brinkmann <git@marcbrinkmann.de>"]
 name = "ulog"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT"
 repository = "https://github.com/mbr/ulog-rs"
-documentation = "https://docs.rs/crate/ulog"
+documentation = "https://docs.rs/ulog"
 readme = "README.md"
 description = "A small logging library (not only) for hard real-time logging."
 
