@@ -155,8 +155,8 @@ impl log::Log for AsyncLogger {
 /// Creates a new `AsyncLogger` with a buffered channel of size `bufsize` and
 /// starts a handler thread that will call `handle` for every `LogMessage`
 /// received.
-pub fn init<F>(bufsize: usize, handle: F) -> Result<(), log::SetLoggerError>
-    where F: Fn(LogMessage) -> (),
+pub fn init<F>(bufsize: usize, mut handle: F) -> Result<(), log::SetLoggerError>
+    where F: FnMut(LogMessage) -> (),
           F: Send + 'static
 {
     let (logger, rx) = AsyncLogger::new(bufsize);
